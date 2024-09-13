@@ -12,7 +12,7 @@ const cache = new LRU({
 
 let transactions = [];
 
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, 'ui')));
 
 fs.readFile(path.join(__dirname, 'transactions.json'), 'utf8', (err, data) => {
     if (err) {
