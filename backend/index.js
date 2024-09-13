@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const LRU = require('lru-cache');  // Import LRU cache
 const app = express();
-const PORT = 30001;
+const PORT = 3000;
 
 const cache = new LRU({
     max: 40,  // Max 40 search queries will be cached
