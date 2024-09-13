@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Liems Search</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>The Liems Search</h1>
+        <input type="text" id="searchInput" placeholder="Search by notes..." oninput="debounceSearch()">
+        <div id="results"></div>
+        <div id="pagination" style="display: flex; justify-content: space-between; align-items: center;">
+            <div id="pagination-prev"></div>
+            <div id="pagination-info"></div>
+            <div id="pagination-next"></div>
+        </div> <!-- Pagination buttons will be inserted here -->
+        <div style="width: 100%; text-align: center;">Powered by ChatGPT</div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
