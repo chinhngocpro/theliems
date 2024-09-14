@@ -69,7 +69,7 @@ app.get('/api/transactions', (req, res) => {
         .replace(/\s+/g, "")
         .replace(/đ+/g, "d");
 
-    const amountQuery = query.replace(/\.+/g, '');
+    const amountQuery = parseInt(query.replace(/\.+/g, ''));
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
