@@ -68,13 +68,14 @@ app.get('/api/transactions', (req, res) => {
 
     const cacheKey = query;
 
-    let rawlist = cacheKey.length > 0 && cache.has(cacheKey) ? cache.get(cacheKey) : [];
-    if (!rawlist || rawlist.length === 0 || !cache.has(cacheKey)) {
-        rawlist = transactions.filter(transaction => transaction.searchValue.includes(query) || transaction.amount === amountQuery || transaction.code === query);
-        if (cacheKey.length > 0) {
-            cache.set(cacheKey, rawlist);
-            logger.debug('Cached query result of keyword', cacheKey, checkMemory());
-        }
+    let filteredTransactions = cacheKey.length > 0 ? (cache.has(cacheKey) ? cache.get(cacheKey) : []) : transactions;
+    if (!filteredTransactions || filteredTransactions.length === 0) {
+        filteredTransactions = transactions.filter(transaction => transaction.searchValue.includes(query) || transaction.amount === amountQuery || transaction.code === query);
+    }
+
+    if (cacheKey.length > 0 && !cache.has(cacheKey)) {
+        cache.set(cacheKey, filteredTransactions);
+        logger.debug('Cached query result of keyword', cacheKey, checkMemory());
     }
 
     // Pagination setup
@@ -82,7 +83,7 @@ app.get('/api/transactions', (req, res) => {
     const endIndex = page * limit;
 
     // Paginate transactions
-    const paginatedResults = rawlist.slice(startIndex, endIndex).map(transaction => {
+    const paginatedResults = filteredTransactions.slice(startIndex, endIndex).map(transaction => {
             return {
                 date: transaction.date,
                 amount: numberWithCommas(transaction.amount),
@@ -94,8 +95,8 @@ app.get('/api/transactions', (req, res) => {
     // Prepare response with pagination info
     const result = {
         currentPage: page,
-        totalPages: Math.ceil(rawlist.length / limit),
-        totalItems: rawlist.length,
+        totalPages: Math.ceil(filteredTransactions.length / limit),
+        totalItems: filteredTransactions.length,
         items: paginatedResults
     };
 
