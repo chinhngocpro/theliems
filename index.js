@@ -2,11 +2,38 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const LRU = require('lru-cache');  // Import LRU cache
+
+const log4js = require("log4js");
+
+log4js.configure({
+    appenders: {
+        application: {
+            type: 'console'
+        },
+        file: {
+            type: 'file',
+            filename: `./logs/application.log`,
+            compression: true,
+            maxLogSize: '10M',
+            backups: 100
+        }
+    },
+    categories: {
+        default: {
+            appenders: ['application', 'file'],
+            level: 'all',
+            enableCallStack: true
+        }
+    },
+});
+
+const logger = log4js.getLogger("CheckVar");
+
 const app = express();
-const PORT = 3000;
+const PORT = 30001;
 
 const cache = new LRU({
-    max: 40,  // Max 40 search queries will be cached
+    max: 80,  // Max 40 search queries will be cached
     ttl: 1000 * 60 * 5 // Optional: Set a time-to-live (TTL) of 5 minutes for each cache item
 });
 
@@ -16,24 +43,23 @@ app.use(express.static(path.join(__dirname, 'ui')));
 
 fs.readFile(path.join(__dirname, 'transactions.json'), 'utf8', (err, data) => {
     if (err) {
-        console.log('Load transactions error', err);
+        logger.debug('Load transactions error', err);
         return;
     }
 
     transactions = JSON.parse(data);
-    transactions = transactions.sort(function(a, b){return a.amount - b.amount});
     transactions.forEach(trans => {
         trans['searchValue'] = trans.notes.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, "");
+        trans.amount = parseInt(trans.amount.toString().replace(/,+/g, ""));
     });
+    transactions = transactions.sort(function(a, b){return a.amount - b.amount});
 
-    console.log("Loaded", transactions.length, "transactions");
-        
-    checkMemory();
+    logger.debug("Loaded", transactions.length, "transactions", checkMemory());
 });
 
 app.get('/api/transactions', (req, res) => {
     // Get search query from request
-    console.log('query', req.query.q);
+    logger.debug('query', req.query.q);
 
     const query = (req.query.q ? req.query.q.toLowerCase() : '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, "");
     const amountQuery = query.replace(/\.+/g, '');
@@ -43,14 +69,12 @@ app.get('/api/transactions', (req, res) => {
     const cacheKey = query;
 
     let rawlist = cacheKey.length > 0 && cache.has(cacheKey) ? cache.get(cacheKey) : [];
-    if (!rawlist || rawlist.length == 0 || !cache.has(cacheKey)) {
-        rawlist = transactions.filter(transaction => transaction.searchValue.includes(query) || transaction.amount == amountQuery || transaction.code == query);
+    if (!rawlist || rawlist.length === 0 || !cache.has(cacheKey)) {
+        rawlist = transactions.filter(transaction => transaction.searchValue.includes(query) || transaction.amount === amountQuery || transaction.code === query);
         if (cacheKey.length > 0) {
             cache.set(cacheKey, rawlist);
-            console.log('Cached query result of keyword', cacheKey);
+            logger.debug('Cached query result of keyword', cacheKey, checkMemory());
         }
-        
-        checkMemory();
     }
 
     // Pagination setup
@@ -79,7 +103,7 @@ app.get('/api/transactions', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    logger.debug(`Server is running on http://localhost:${PORT}`);
 });
 
 function numberWithCommas(x) {
@@ -89,12 +113,14 @@ function numberWithCommas(x) {
 function checkMemory() {
     const formatMemoryUsage = (data) => `${Math.round(data / 1024 / 1024 * 100) / 100} MB`;
     const memoryData = process.memoryUsage();
-    const memoryUsage = {
-      rss: `${formatMemoryUsage(memoryData.rss)} -> Resident Set Size - total memory allocated for the process execution`,
-      heapTotal: `${formatMemoryUsage(memoryData.heapTotal)} -> total size of the allocated heap`,
-      heapUsed: `${formatMemoryUsage(memoryData.heapUsed)} -> actual memory used during the execution`,
-      external: `${formatMemoryUsage(memoryData.external)} -> V8 external memory`,
-    };
+    // const memoryUsage = {
+    //   rss: `${formatMemoryUsage(memoryData.rss)} -> Resident Set Size - total memory allocated for the process execution`,
+    //   heapTotal: `${formatMemoryUsage(memoryData.heapTotal)} -> total size of the allocated heap`,
+    //   heapUsed: `${formatMemoryUsage(memoryData.heapUsed)} -> actual memory used during the execution`,
+    //   external: `${formatMemoryUsage(memoryData.external)} -> V8 external memory`,
+    // };
 
-    console.log(memoryUsage);
+    // logger.debug(memoryUsage);
+
+    return `| Memory usage: ${formatMemoryUsage(memoryData.rss)}`;
 }
