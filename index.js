@@ -49,7 +49,10 @@ fs.readFile(path.join(__dirname, 'transactions.json'), 'utf8', (err, data) => {
 
     transactions = JSON.parse(data);
     transactions.forEach(trans => {
-        trans['searchValue'] = trans.notes.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, "");
+        trans['searchValue'] = trans.notes.toLowerCase().normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\s+/g, "")
+            .replace(/đ+/g, "d");
         trans.amount = parseInt(trans.amount.toString().replace(/,+/g, ""));
     });
     transactions = transactions.sort(function(a, b){return a.amount - b.amount});
@@ -61,7 +64,11 @@ app.get('/api/transactions', (req, res) => {
     // Get search query from request
     logger.debug('query', req.query.q);
 
-    const query = (req.query.q ? req.query.q.toLowerCase() : '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, "");
+    const query = (req.query.q ? req.query.q.toLowerCase() : '').normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, "")
+        .replace(/đ+/g, "d");
+
     const amountQuery = query.replace(/\.+/g, '');
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
