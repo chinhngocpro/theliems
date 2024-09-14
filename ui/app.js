@@ -4,7 +4,7 @@ let debounceTimeout;
 
 // Fetch data from backend API with pagination
 function fetchTransactions(query = '', page = 1) {
-    fetch(`/api/transactions?q=${query}&page=${page}&limit=${limit}`)
+    fetch(`api/transactions?q=${query}&page=${page}&limit=${limit}`)
         .then(response => response.json())
         .then(data => {
             displayTransactions(data.items);
