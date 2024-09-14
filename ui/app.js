@@ -22,10 +22,10 @@ function displayTransactions(data) {
         const transactionDiv = document.createElement('div');
         transactionDiv.className = 'transaction';
         transactionDiv.innerHTML = `
-            <p><strong>Date:</strong> ${transaction.date}</p>
-            <p><strong>Amount:</strong> ${transaction.amount}</p>
-            <p><strong>Notes:</strong> ${transaction.notes}</p>
-            <p><strong>Code:</strong> ${transaction.code}</p>
+            <p><strong>Ngày chuyển:</strong> ${transaction.date}</p>
+            <p><strong>Số tiền:</strong> ${transaction.amount}</p>
+            <p><strong>Nội dung:</strong> ${transaction.notes}</p>
+            <p><strong>Số tham chiếu:</strong> ${transaction.code}</p>
         `;
         resultsDiv.appendChild(transactionDiv);
     });
